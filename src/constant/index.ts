@@ -10,8 +10,8 @@ import {
 export const IS_APPLE_DEVICE = /Mac|iPod|iPhone|iPad/.test(navigator.platform)
 
 export const GLOBAL = 'GLOBAL'
-export const TEST_URL = 'https://cp.cloudflare.com'
-export const IPV6_TEST_URL = 'https://cp.cloudflare.com'
+export const TEST_URL = 'https://https://www.gstatic.com/generate_204'
+export const IPV6_TEST_URL = 'https://https://www.gstatic.com/generate_204'
 export const NOT_CONNECTED = 0
 
 // 既然只保留英文，这里可以只留 EN_US，或者保留枚举定义但只用英文
