@@ -65,7 +65,6 @@ export const fetchVersionAPI = () => {
   return axios.get<{ version: string }>('/version')
 }
 export const isSingBox = computed(() => version.value?.includes('sing-box'))
-export const zashboardVersion = ref(__APP_VERSION__)
 
 watch(
   activeBackend,
@@ -79,7 +78,7 @@ watch(
       isCoreUpdateAvailable.value = await fetchBackendUpdateAvailableAPI()
 
       if (isCoreUpdateAvailable.value && autoUpgradeCore.value) {
-        upgradeCoreAPI('auto')
+        upgradeCoreAPI()
       }
     }
   },
@@ -204,18 +203,12 @@ export const reloadConfigsAPI = () => {
   return axios.put('/configs?reload=true', { path: '', payload: '' })
 }
 
-export const upgradeUIAPI = () => {
-  return axios.post('/upgrade/ui')
-}
-
 export const updateGeoDataAPI = () => {
   return axios.post('/configs/geo')
 }
 
-export const upgradeCoreAPI = (type: 'release' | 'alpha' | 'auto') => {
-  const url = type === 'auto' ? '/upgrade' : `/upgrade?channel=${type}`
-
-  return axios.post(url)
+export const upgradeCoreAPI = () => {
+  return axios.post('/upgrade')
 }
 
 export const restartCoreAPI = () => {
@@ -339,52 +332,11 @@ async function fetchWithLocalCache<T>(url: string, version: string): Promise<T> 
   return data
 }
 
-export const fetchIsUIUpdateAvailable = async () => {
+export const fetchBackendUpdateAvailableAPI = async () => {
   const { tag_name } = await fetchWithLocalCache<{ tag_name: string }>(
-    'https://api.github.com/repos/Zephyruso/zashboard/releases/latest',
-    zashboardVersion.value,
+    'https://api.github.com/repos/MetaCubeX/mihomo/releases/latest',
+    version.value,
   )
 
-  return Boolean(tag_name && tag_name !== `v${zashboardVersion.value}`)
-}
-
-const check = async (url: string, versionNumber: string) => {
-  const { assets } = await fetchWithLocalCache<{ assets: { name: string }[] }>(url, versionNumber)
-  const alreadyLatest = assets.some(({ name }) => name.includes(versionNumber))
-
-  return !alreadyLatest
-}
-
-export const fetchBackendUpdateAvailableAPI = async () => {
-  const match = /(alpha-smart|alpha|beta|meta)-?(\w+)/.exec(version.value)
-
-  if (!match) {
-    const { tag_name } = await fetchWithLocalCache<{ tag_name: string }>(
-      'https://api.github.com/repos/MetaCubeX/mihomo/releases/latest',
-      version.value,
-    )
-
-    return Boolean(tag_name && !tag_name.endsWith(version.value))
-  }
-
-  const channel = match[1],
-    versionNumber = match[2]
-
-  if (channel === 'meta')
-    return await check(
-      'https://api.github.com/repos/MetaCubeX/mihomo/releases/latest',
-      versionNumber,
-    )
-  if (channel === 'alpha')
-    return await check(
-      'https://api.github.com/repos/MetaCubeX/mihomo/releases/tags/Prerelease-Alpha',
-      versionNumber,
-    )
-  if (channel === 'alpha-smart')
-    return await check(
-      'https://api.github.com/repos/vernesong/mihomo/releases/tags/Prerelease-Alpha',
-      versionNumber,
-    )
-
-  return false
+  return Boolean(tag_name && !tag_name.endsWith(version.value))
 }
