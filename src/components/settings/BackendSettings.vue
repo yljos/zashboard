@@ -1,3 +1,4 @@
+```vue
 <template>
   <!-- backend -->
   <div
@@ -135,8 +136,13 @@
         <button
           v-if="!activeBackend?.disableUpgradeCore"
           class="btn btn-primary btn-sm"
-          @click="showUpgradeCoreModal = true"
+          :disabled="isCoreUpgrading"
+          @click="handlerClickUpgradeCore"
         >
+          <span
+            v-if="isCoreUpgrading"
+            class="loading loading-spinner loading-md"
+          ></span>
           {{ $t('upgradeCore') }}
         </button>
         <button
@@ -190,7 +196,6 @@
         {{ $t('flushSmartWeights') }}
       </button>
     </div>
-    <UpgradeCoreModal v-model="showUpgradeCoreModal" />
   </div>
 </template>
 
@@ -204,10 +209,12 @@ import {
   reloadConfigsAPI,
   restartCoreAPI,
   updateGeoDataAPI,
+  upgradeCoreAPI,
 } from '@/api'
 import BackendVersion from '@/components/common/BackendVersion.vue'
 import BackendSwitch from '@/components/settings/BackendSwitch.vue'
 import { SETTINGS_MENU_KEY } from '@/constant'
+import { handlerUpgradeSuccess } from '@/helper'
 import { showNotification } from '@/helper/notification'
 import { configs, fetchConfigs, updateConfigs } from '@/store/config'
 import { fetchProxies, hasSmartGroup } from '@/store/proxies'
@@ -221,9 +228,8 @@ import {
 import { activeBackend } from '@/store/setup'
 import type { Config } from '@/types'
 import { computed, ref } from 'vue'
-import UpgradeCoreModal from './UpgradeCoreModal.vue'
 
-// 检查是否有可见的子项
+// Check if there are visible items
 const hasVisibleItems = computed(() => {
   return (
     !hiddenSettingsItems.value[`${SETTINGS_MENU_KEY.backend}.backendSwitch`] ||
@@ -280,7 +286,21 @@ const reloadAll = () => {
   fetchProxies()
 }
 
-const showUpgradeCoreModal = ref(false)
+// Direct upgrade to release logic
+const isCoreUpgrading = ref(false)
+const handlerClickUpgradeCore = async () => {
+  if (isCoreUpgrading.value) return
+  isCoreUpgrading.value = true
+  try {
+    await upgradeCoreAPI('release')
+    reloadAll()
+    handlerUpgradeSuccess()
+  } catch (e) {
+    console.error(e)
+  } finally {
+    isCoreUpgrading.value = false
+  }
+}
 
 const isCoreRestarting = ref(false)
 const handlerClickRestartCore = async () => {
@@ -365,3 +385,5 @@ const handleFlushFakeIP = async () => {
   })
 }
 </script>
+
+```
